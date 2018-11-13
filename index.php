@@ -104,26 +104,33 @@
 <script>
 
 
-    var allianceID1;
-    var allianceID2;
-    var allianceID3;
-    var allianceID4;
-    var allianceID5;
-    var allianceID6;
-    var alliance1side;
-    var alliance2side;
-    var alliance3side;
-    var alliance4side;
-    var alliance5side;
-    var alliance6side;
-    var allianceAlliance1;
-    var allianceAlliance2;
-    var allianceAlliance3;
-    var allianceAlliance4;
-    var allianceAlliance5;
-    var allianceAlliance6;
-    var killPageNumber = 1;
-    var lossPageNumber = 1;
+
+    var ZkillPageNumber = 1;
+
+    var CurrentAllianceFetch = 0;
+
+    var Allkillsfound = false;
+    var Alllossesfound = false;
+
+    var GetDataFinished = false;
+
+    var Side0Kills = [];
+    var Side1Kills = [];
+    var Side0Losses = [];
+    var Side1Losses = [];
+
+    var FinalSide0Kills = [];
+    var FinalSide1Kills = [];
+
+    var GetAllianceInfo = false;
+
+    var SortedData = false;
+
+    var progressKillID;
+
+    var HasPercentageUnder = false;
+
+
     var JSONString = "N/A";
     var date;
     var year;
@@ -143,12 +150,10 @@
     var ESIHash;
     var ESIKMID;
     var lossMailsAmount = 0;
-    var allKillMailsFound = false;
-    var allLossMailsFound = false;
-    var allianceOneReady = false;
-    var allianceTwoReady = false;
-    var allianceOneInDatabase = false;
-    var allianceTwoInDatabase = false;
+
+
+
+
     var PHPReturn;
     var previouslength = 0;
 
@@ -172,8 +177,6 @@
             allianceTest(number + 1)
         }
     }
-
-
 
     function addAlliance(input) {
 
@@ -228,53 +231,10 @@
 
     }
 
-
-
-
-
-
-
     function RunProgram() {
 
         resetVariables();
 
-
-
-
-        if (listofAlliances[0][3] !== 0) {
-            allianceID1 = listofAlliances[0][3];
-            alliance1side = listofAlliances[0][2];
-            allianceAlliance1 = listofAlliances[0][4];
-        }
-        if (listofAlliances[1][3] !== 0) {
-            allianceID2 = listofAlliances[1][3];
-            alliance2side = listofAlliances[1][2];
-            allianceAlliance2 = listofAlliances[1][4];
-        }
-        if (listofAlliances[2][3] !== 0) {
-            allianceID3 = listofAlliances[2][3];
-            alliance3side = listofAlliances[2][2];
-            allianceAlliance3 = listofAlliances[2][4];
-        }
-        if (listofAlliances[3][3] !== 0) {
-            allianceID4 = listofAlliances[3][3];
-            alliance4side = listofAlliances[3][2];
-            allianceAlliance4 = listofAlliances[3][4];
-        }
-        if (listofAlliances[4][3] !== 0) {
-            allianceID5 = listofAlliances[4][3];
-            alliance5side = listofAlliances[4][2];
-            allianceAlliance5 = listofAlliances[4][4];
-        }
-        if (listofAlliances[5][3] !== 0) {
-            allianceID6 = listofAlliances[5][3];
-            alliance6side = listofAlliances[5][2];
-            allianceAlliance6 = listofAlliances[5][4];
-        }
-
-
-
-        
 
         date = document.getElementById("Year").value + document.getElementById("Month").value + document.getElementById("Day").value + document.getElementById("Hour").value + "00";
 
@@ -285,35 +245,140 @@
 
 
 
-        PHPzkb.onreadystatechange = function () {
-            if (PHPzkb.readyState == 4 && PHPzkb.status == 200) {
-
-                clearInterval(timer);
-
-                var foundBreak = false;
-                var fulllength = PHPzkb.responseText.length
-                var fullString = PHPzkb.responseText;
-                var x = 0;
-                y = fulllength;
-                while ((y > x) && (foundBreak == false)) {
-                    y = y - 1;
-                    var currentChar = fullString.charAt(y);
-                    if (currentChar == "`") {
-
-                        foundBreak = true
-                    };
-                }
-
-
-                PHPReturn = JSON.parse(PHPzkb.responseText.substring(y + 1));
-                SortData();
-            };
-        }
-        PHPzkb.open("GET", "PHPGetZKBInfo.php?ID1=" + allianceID1 + "&ID2=" + allianceID2 + "&ID3=" + allianceID3 + "&ID4=" + allianceID4 + "&ID5=" + allianceID5 + "&ID6=" + allianceID6 + "&Side1=" + alliance1side + "&Side2=" + alliance2side + "&Side3=" + alliance3side + "&Side4=" + alliance4side + "&Side5=" + alliance5side + "&Side6=" + alliance6side + "&isAlliance1=" + allianceAlliance1 + "&isAlliance2=" + allianceAlliance2 + "&isAlliance3=" + allianceAlliance3 + "&isAlliance4=" + allianceAlliance4 + "&isAlliance5=" + allianceAlliance5 + "&isAlliance6=" + allianceAlliance6 + "&year=" + year + "&month=" + month + "&day=" + day + "&hour=" + hour, true);
-        PHPzkb.send();
-
 
         getProgress();
+       
+
+
+        Controller();
+
+
+    }
+
+    function Controller() {
+
+
+        while (GetDataFinished == false) {
+
+            while (Allkillsfound == false) {
+                setTimeout(GetZKillData("kills"), 0);
+            }
+
+            while (Alllossesfound == false) {
+                setTimeout(GetZKillData("losses"), 0)
+            }
+
+            if (Allkillsfound == true && Alllossesfound == true) {
+                CurrentAllianceFetch = CurrentAllianceFetch + 1;
+                ZkillPageNumber = 1;
+                Allkillsfound = false;
+                Alllossesfound = false;
+                if (listofAlliances[CurrentAllianceFetch][3] == 0) {
+                    GetDataFinished = true;
+                }
+            }
+
+        }
+        if (SortedData == false) {
+            SortData();
+
+        }
+
+
+
+    };
+
+
+    function GetZKillData(KorL) {
+        var AorC;
+        var allianceID = listofAlliances[CurrentAllianceFetch][3];
+
+        if (listofAlliances[CurrentAllianceFetch][4] == 1) {
+            AorC = 'alliance';
+        }
+        else {
+            AorC = 'corporation'
+        }
+
+        var ConnectionURL = 'https://zkillboard.com/api/'+KorL+'/' + AorC + 'ID/'+allianceID+'/page/' + ZkillPageNumber + '/startTime/' + date + '/'
+        
+        var Connection = new XMLHttpRequest();
+        Connection.open("GET", ConnectionURL, false);
+        Connection.send();
+        var ResponseJSON = JSON.parse(Connection.responseText)
+        var arraysize = ResponseJSON.length;
+
+        
+
+        if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "kills" && arraysize != 0) {
+
+            var x = 0;
+            var y = arraysize;
+            while (x < y) {
+                Side0Kills.push(ResponseJSON[x]);
+                x++;
+            }
+
+        }
+        if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "kills" && arraysize != 0) {
+            var x = 0;
+            var y = arraysize;
+            while (x < y) {
+                Side1Kills.push(ResponseJSON[x]);
+                x++;
+            }
+        }
+        if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "losses" && arraysize != 0) {
+            var x = 0;
+            var y = arraysize;
+            while (x < y) {
+                Side0Losses.push(ResponseJSON[x]);
+                x++;
+            }
+        }
+        if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "losses" && arraysize != 0) {
+            var x = 0;
+            var y = arraysize;
+            while (x < y) {
+                Side1Losses.push(ResponseJSON[x]);
+                x++;
+            }
+        }
+
+
+        ZkillPageNumber = ZkillPageNumber + 1;
+
+
+
+
+        if (HasPercentageUnder == false) {
+            PercentageUnder = ResponseJSON[0].killmail_id - progressKillID;
+            HasPercentageUnder = true;
+        }
+
+
+
+        if (ResponseJSON.length != 0) {
+            var PercentageOver = ResponseJSON[0].killmail_id - progressKillID;
+            var finalProgress = 100 - Math.round((PercentageOver / PercentageUnder)) * 100;
+            document.getElementById("Progress").innerHTML = listofAlliances[CurrentAllianceFetch][0] + " " + KorL + " - %" + finalProgress;
+            
+        };
+
+
+
+
+        if (arraysize == 0 && KorL == "kills") {
+            Allkillsfound = true;
+            ZkillPageNumber = 1;
+            HasPercentageUnder = false;
+        }
+        if (arraysize == 0 && KorL == "losses") {
+            Alllossesfound = true;
+            ZkillPageNumber = 1;
+            HasPercentageUnder = false;
+        }
+
 
     }
 
@@ -322,29 +387,20 @@
 
 
 
+
+
+
     function getProgress() {
 
-        timer = setInterval(function () {
+        var progressURL = "https://zkillboard.com/api/history/" + year + month + day + "/";             ////Start of progress info
+        var progressHTTP = new XMLHttpRequest();
+        progressHTTP.open("GET", progressURL, false);
+        progressHTTP.send();
 
-            try {
-                var foundBreak = false;
-                var fulllength = PHPzkb.responseText.length
-                var fullString = PHPzkb.responseText;
-                var x = 0;
-                y = fulllength;
-                while ((y > x) && (foundBreak == false)) {
-                    y = y - 1;
-                    var currentChar = fullString.charAt(y);
-                    if (currentChar == "`") {
+        var ProgressJSON = JSON.parse(progressHTTP.responseText)
+        var progressArray = Object.keys(ProgressJSON);
+        progressKillID = progressArray[0];
 
-                        foundBreak = true
-                    };
-                }
-                document.getElementById("Progress").innerHTML = fullString.substring(y + 1);
-            }
-            finally {
-            }
-        }, 3000);
 
     }
 
@@ -355,20 +411,53 @@
         var Side0Value = 0;
         var Side1Value = 0;
 
-        var Side0Kills = PHPReturn[0];
-        var Side1Kills = PHPReturn[1];
-
         var x = 0;
         var y = Side0Kills.length;
+
+        var w = 0;
+        var z = Side1Losses.length;
         while (x < y) {
-            Side0Value = Side0Value + Side0Kills[x].zkb.totalValue;
+            while (w < z) {
+                if (Side0Kills[x].killmail_id == Side1Losses[w].killmail_id) {
+                    FinalSide0Kills.push(Side0Kills[x]);
+                }
+                w++;
+            }
+            w = 0;
+            x++;
+        }
+
+        var x = 0;
+        var y = Side1Kills.length;
+
+        var w = 0;
+        var z = Side0Losses.length;
+
+        while (x < y) {
+            while (w < z) {
+                if (Side1Kills[x].killmail_id == Side0Losses[w].killmail_id) {
+                    FinalSide1Kills.push(Side1Kills[x]);
+                }
+                w++;
+            }
+            w = 0;
+            x++;
+        }
+
+
+
+
+        var x = 0;
+        var y = FinalSide0Kills.length;
+        while (x < y) {
+            Side0Value = Side0Value + FinalSide0Kills[x].zkb.totalValue;
             x = x + 1;
         }
 
         x = 0;
-        y = Side1Kills.length;
+        y = FinalSide1Kills.length;
         while (x < y) {
-            Side1Value = Side1Value + Side1Kills[x].zkb.totalValue;
+            Side1Value = Side1Value + FinalSide1Kills[x].zkb.totalValue;
             x = x + 1;
         }
 
@@ -378,7 +467,7 @@
         document.getElementById("Side0Kill").innerHTML = "Blue side killed " + FormatValueSide0 + " isk";
         document.getElementById("Side1Kill").innerHTML = "Red side killed " + FormatValueSide1 + " isk";
 
-
+        SortedData = true;
 
     }
 
@@ -466,27 +555,28 @@
 
 
 
+        ZkillPageNumber = 1;
 
-        allianceID1 = 0;
-        allianceID2 = 0;
-        allianceID3 = 0;
-        allianceID4 = 0;
-        allianceID5 = 0;
-        allianceID6 = 0;
-        alliance1side = 0;
-        alliance2side = 0;
-        alliance3side = 0;
-        alliance4side = 0;
-        alliance5side = 0;
-        alliance6side = 0;
-        allianceAlliance1 = 0;
-        allianceAlliance2 = 0;
-        allianceAlliance3 = 0;
-        allianceAlliance4 = 0;
-        allianceAlliance5 = 0;
-        allianceAlliance6 = 0;
-        killPageNumber = 1;
-        lossPageNumber = 1;
+        CurrentAllianceFetch = 0;
+
+        Allkillsfound = false;
+        Alllossesfound = false;
+
+        GetDataFinished = false;
+
+        Side0Kills = [];
+        Side1Kills = [];
+        Side0Losses = [];
+        Side1Losses = [];
+
+        FinalSide0Kills = [];
+        FinalSide1Kills = [];
+
+        GetAllianceInfo = false;
+
+        SortedData = false;
+
+
         JSONString = "N/A";
         date = 0;
         year = 0;
