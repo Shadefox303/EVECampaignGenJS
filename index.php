@@ -290,6 +290,7 @@
 
 
     function GetZKillData(KorL) {
+        var killmailsParsed
         var AorC;
         var allianceID = listofAlliances[CurrentAllianceFetch][3];
 
@@ -318,6 +319,7 @@
                 Side0Kills.push(ResponseJSON[x]);
                 x++;
             }
+            killmailsParsed = Side0Kills.length
 
         }
         if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "kills" && arraysize != 0) {
@@ -327,6 +329,7 @@
                 Side1Kills.push(ResponseJSON[x]);
                 x++;
             }
+            killmailsParsed = Side1Kills.length
         }
         if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "losses" && arraysize != 0) {
             var x = 0;
@@ -335,6 +338,7 @@
                 Side0Losses.push(ResponseJSON[x]);
                 x++;
             }
+            killmailsParsed = Side0Losses.length
         }
         if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "losses" && arraysize != 0) {
             var x = 0;
@@ -343,6 +347,7 @@
                 Side1Losses.push(ResponseJSON[x]);
                 x++;
             }
+            killmailsParsed = Side1Losses.length
         }
 
 
@@ -360,20 +365,21 @@
 
         if (ResponseJSON.length != 0) {
             var PercentageOver = ResponseJSON[0].killmail_id - progressKillID;
-            var finalProgress = 100 - Math.round((PercentageOver / PercentageUnder)) * 100;
-            document.getElementById("Progress").innerHTML = listofAlliances[CurrentAllianceFetch][0] + " " + KorL + " - %" + finalProgress;
+            var Percentage = PercentageOver / PercentageUnder
+            var finalProgress = Math.round(100 - (Percentage * 100));
+            document.getElementById("Progress").innerHTML = listofAlliances[CurrentAllianceFetch][0] + " " + KorL + " - " + finalProgress + "%";
             
         };
 
 
 
 
-        if (arraysize == 0 && KorL == "kills") {
+        if (arraysize < 200 && KorL == "kills") {
             Allkillsfound = true;
             ZkillPageNumber = 1;
             HasPercentageUnder = false;
         }
-        if (arraysize == 0 && KorL == "losses") {
+        if (arraysize < 200 && KorL == "losses") {
             Alllossesfound = true;
             ZkillPageNumber = 1;
             HasPercentageUnder = false;
