@@ -1,5 +1,7 @@
 <title>EVE Online Campaign Generator</title>
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
 
 <h2 align="center">EVE Campaign Generator</h2>
 
@@ -105,6 +107,8 @@
 
 
 
+
+
     var ZkillPageNumber = 1;
 
     var CurrentAllianceFetch = 0;
@@ -129,6 +133,8 @@
     var progressKillID;
 
     var HasPercentageUnder = false;
+
+    var Timeout;
 
 
     var JSONString = "N/A";
@@ -258,14 +264,14 @@
     function Controller() {
 
 
-        while (GetDataFinished == false) {
+        if (GetDataFinished == false) {
 
-            while (Allkillsfound == false) {
-                setTimeout(GetZKillData("kills"), 0);
+            if (Allkillsfound == false && Alllossesfound == false) {
+                setTimeout(function () { GetZKillData("kills"); }, 1);
             }
 
-            while (Alllossesfound == false) {
-                setTimeout(GetZKillData("losses"), 0)
+            if (Alllossesfound == false && Allkillsfound == true) {
+                setTimeout(function () { GetZKillData("losses"); }, 1)
             }
 
             if (Allkillsfound == true && Alllossesfound == true) {
@@ -273,18 +279,26 @@
                 ZkillPageNumber = 1;
                 Allkillsfound = false;
                 Alllossesfound = false;
-                if (listofAlliances[CurrentAllianceFetch][3] == 0) {
-                    GetDataFinished = true;
+                try {
+                    if (listofAlliances[CurrentAllianceFetch][3] == 0) {
+                        GetDataFinished = true;
+                    }
                 }
+                catch (err) { GetDataFinished = true; }
+                finally {
+
+                }
+
+
+
+                Controller();
             }
 
         }
-        if (SortedData == false) {
+        if (GetDataFinished == true) {
             SortData();
 
         }
-
-
 
     };
 
@@ -302,7 +316,9 @@
         }
 
         var ConnectionURL = 'https://zkillboard.com/api/'+KorL+'/' + AorC + 'ID/'+allianceID+'/page/' + ZkillPageNumber + '/startTime/' + date + '/'
-        
+
+
+
         var Connection = new XMLHttpRequest();
         Connection.open("GET", ConnectionURL, false);
         Connection.send();
@@ -310,6 +326,8 @@
         var arraysize = ResponseJSON.length;
 
         
+
+
 
         if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "kills" && arraysize != 0) {
 
@@ -367,10 +385,11 @@
             var PercentageOver = ResponseJSON[0].killmail_id - progressKillID;
             var Percentage = PercentageOver / PercentageUnder
             var finalProgress = Math.round(100 - (Percentage * 100));
+
             document.getElementById("Progress").innerHTML = listofAlliances[CurrentAllianceFetch][0] + " " + KorL + " - " + finalProgress + "%";
             
+            
         };
-
 
 
 
@@ -385,6 +404,8 @@
             HasPercentageUnder = false;
         }
 
+
+        Controller();
 
     }
 
@@ -473,7 +494,6 @@
         document.getElementById("Side0Kill").innerHTML = "Blue side killed " + FormatValueSide0 + " isk";
         document.getElementById("Side1Kill").innerHTML = "Red side killed " + FormatValueSide1 + " isk";
 
-        SortedData = true;
 
     }
 
