@@ -19,6 +19,7 @@
     <Compile Include="GETZKBBACKUP.php" />
     <Compile Include="index.php" />
     <Compile Include="INDEXBACKUP.php" />
+    <Compile Include="PHPCharResultSorting.php" />
     <Compile Include="PHPDatabaseCheck.php" />
     <Compile Include="PHPGetZKBInfo.php" />
   </ItemGroup>

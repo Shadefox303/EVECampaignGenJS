@@ -107,7 +107,7 @@
 <div id="Result" style="display:none">
 
     <div id="ResultAlliances" align="center" style="border-radius:10px;background-color:rgb(108, 129, 199);height:775px;margin-left:auto;margin-right:auto;max-width:800px;min-width:550px">
-        <button onclick="ResultCharacterDisplay(true)">Largest Killers</button><button onclick="ShowMain()">Back To Main</button><button onclick="ResultCharacterDisplay(false)">Largest Losers</button>
+        <button onclick="ResultCharacterDisplay(1)">Largest Killers</button><button onclick="ShowMain()">Back To Main</button><button onclick="ResultCharacterDisplay(0)">Largest Losers</button>
         <br />
         <div id="ResultAllianceSide0" style="border-radius:5px;float:left;margin-left:50px;margin-right:10px ; margin-top:20px ; margin-bottom:10px; height:700px ; width : 340px;  background-color:cornflowerblue;overflow-y:scroll">
 
@@ -274,7 +274,7 @@
         var ResultsPageTicker = setInterval(function () {
             if (KillmailsParsed >= KillmailsToParse && CharactersParsed >= CharactersToParse && InitialResultsCharDisplayDone == false) {
                 clearInterval(ResultsPageTicker);
-                ResultCharacterDisplay(true)
+                ResultCharacterDisplay(1)
             }
         }, 1000)
 
@@ -415,36 +415,48 @@
 
     }
 
-    function ResultCharacterDisplay(killers) {                                             //Create divs for each character   (((((((((ONLY WORKING FOR ALLIANCEID, NOT CORP)))))))))  Uses SIDE to determine if it's to be put in.
+    function ResultCharacterDisplay(killers) {                                             //Create divs for each character   
 
         document.getElementById("ResultAllianceSide0").innerHTML = "";
         document.getElementById("ResultAllianceSide1").innerHTML = "";
 
-        if (killers == false) {
-            Characters.sort(function (a, b) { return b.iskLost - a.iskLost });
-        }
-        else {
-            Characters.sort(function (a, b) { return b.iskKilled - a.iskKilled });
-        }
+        var PHPCharSort = new XMLHttpRequest();
+        PHPCharSort.onreadystatechange = function () {
+            if (PHPCharSort.readyState == 4 && PHPCharSort.status == 200) {
 
-        var Rx = 0;
-        var Ry = Characters.length;
-        while (Rx < Ry) {
-            var RCharacterID = Characters[Rx].character_id
-            var RAllianceID = Characters[Rx].allianceID;
-            var RCorpID = Characters[Rx].corpID;
-            var RIskKilled = Characters[Rx].iskKilled;
-            var RIskLost = Characters[Rx].iskLost;
-            var Rside = Characters[Rx].side;
-            var Rname = Characters[Rx].name;
-            if (Rside != undefined && Rname != "N/A" && Rside != "N/A") {
-                document.getElementById("ResultAllianceSide" + Rside).innerHTML += '<div id="R' + RCharacterID + '" style="border-radius: 5px;width: 300px;height:100px;background-color:gray;margin-bottom: 10px;margin-top: 10px"><img style="float: left;margin-top: 15px;" src="http://image.eveonline.com/Character/' + RCharacterID + '_64.jpg" /><div><p style="margin-top: 15px;border-top-width: 10px;padding-top: 5px">' + Rname + '</p><p id="RK' + RCharacterID + '">Killed ' + RIskKilled.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p><p id = "RL' + RCharacterID + '">Lost ' + RIskLost.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p></div></div>';
+                var SortedCharacters = JSON.parse(PHPCharSort.responseText)
+            
+                var Rx = 0;
+                var Ry = SortedCharacters.length;
+                while (Rx < Ry) {
+                    var RCharacterID = SortedCharacters[Rx].character_id
+                    var RAllianceID = SortedCharacters[Rx].allianceID;
+                    var RCorpID = SortedCharacters[Rx].corpID;
+                    var RIskKilled = SortedCharacters[Rx].iskKilled;
+                    var RIskLost = SortedCharacters[Rx].iskLost;
+                    var Rside = SortedCharacters[Rx].side;
+                    var Rname = SortedCharacters[Rx].name;
+                    if (Rside != undefined && Rname != "N/A" && Rside != "N/A") {
+                        document.getElementById("ResultAllianceSide" + Rside).innerHTML += '<div id="R' + RCharacterID + '" style="border-radius: 5px;width: 300px;height:100px;background-color:gray;margin-bottom: 10px;margin-top: 10px"><img style="float: left;margin-top: 15px;" src="http://image.eveonline.com/Character/' + RCharacterID + '_64.jpg" /><div><p style="margin-top: 15px;border-top-width: 10px;padding-top: 5px">' + Rname + '</p><p id="RK' + RCharacterID + '">Killed ' + RIskKilled.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p><p id = "RL' + RCharacterID + '">Lost ' + RIskLost.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p></div></div>';
+
+
+                    }
+                    Rx++;
+                }
+
+
+
+
 
 
             }
-            Rx++;
         }
+
+        PHPCharSort.open("POST", "PHPCharResultSorting.php?Killers=" + killers, true);
+        PHPCharSort.send(JSON.stringify(Characters))
+
         InitialResultsCharDisplayDone = true;
+
     }
 
 
