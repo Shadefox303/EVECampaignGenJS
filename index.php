@@ -73,15 +73,15 @@
     <div style="padding-left:10px;padding-top:1px;border-radius:15px;height:200px;background-color:antiquewhite;margin-left:auto;margin-right:auto;max-width:700px;min-width:550px">
         <div style="float:left">
 
-        <p>Year (YYYY)<input onblur="isReady()" oninput="isReady()" id="Year" /></p>
+            <p>Year (YYYY)<input onblur="isReady()" oninput="isReady()" id="Year" /></p>
 
-        <p>Month (MM)<input onblur="isReady()" oninput="isReady()" id="Month" /></p>
+            <p>Month (MM)<input onblur="isReady()" oninput="isReady()" id="Month" /></p>
 
-        <p>Day (DD)<input onblur="isReady()" oninput="isReady()" id="Day" /></p>
+            <p>Day (DD)<input onblur="isReady()" oninput="isReady()" id="Day" /></p>
 
-        <p>Hour (HH)<input onblur="isReady()" oninput="isReady()" id="Hour" /></p>
+            <p>Hour (HH)<input onblur="isReady()" oninput="isReady()" id="Hour" /></p>
 
-        <button id="StartButton" onclick="RunProgram()" disabled>Start!</button> 
+            <button id="StartButton" onclick="RunProgram()" disabled>Start!</button>
 
         </div>
 
@@ -107,7 +107,7 @@
 <div id="Result" style="display:none">
 
     <div id="ResultAlliances" align="center" style="border-radius:10px;background-color:rgb(108, 129, 199);height:775px;margin-left:auto;margin-right:auto;max-width:800px;min-width:550px">
-        <button onclick="ShowMain()">Back To Main</button>
+        <button onclick="ResultCharacterDisplay(true)">Largest Killers</button><button onclick="ShowMain()">Back To Main</button><button onclick="ResultCharacterDisplay(false)">Largest Losers</button>
         <br />
         <div id="ResultAllianceSide0" style="border-radius:5px;float:left;margin-left:50px;margin-right:10px ; margin-top:20px ; margin-bottom:10px; height:700px ; width : 340px;  background-color:cornflowerblue;overflow-y:scroll">
 
@@ -123,13 +123,15 @@
 </div>
 
 <script>
-    var Characters = [];             //  character_id / iskLost / iskKilled /
-    var System = []
-    var KillmailsParsed = 0;
-    var CharactersParsed = 0;
-    var ResultsCharDisplayDone = false;
-    var DataSorted = false;
     {
+
+        var Characters = [];             //  character_id / iskLost / iskKilled /
+        var System = []
+        var KillmailsParsed = 0;
+        var CharactersParsed = 0;
+        var InitialResultsCharDisplayDone = false;
+        var DataSorted = false;
+
         var ZkillPageNumber = 1;
 
         var CurrentAllianceFetch = 0;
@@ -193,10 +195,12 @@
         var LastAlliance = 2;
 
         var listofAlliances = new Array();                                      //          0              1               2                       3               4
-                                                                                // Alliance number  /  Is ready  /   Side they're on      /  AllianceID    /  Is an alliance?     //
+        // Alliance number  /  Is ready  /   Side they're on      /  AllianceID    /  Is an alliance?     //
         var listofAlliances = [['Alliance1', 'false', 0, 0, 1], ['Alliance2', 'false', 1, 0, 1], ['Alliance3', 'false', 1, 0, 1], ['Alliance4', 'false', 1, 0, 1], ['Alliance5', 'false', 1, 0, 1], ['Alliance6', 'false', 1, 0, 1]];
 
     }
+
+
 
     function ShowResults() {
         $("#Main").fadeOut(function () { $("#Result").fadeIn(); });
@@ -268,11 +272,11 @@
         var CharactersToParse = Characters.length;
 
         var ResultsPageTicker = setInterval(function () {
-            if (KillmailsParsed >= KillmailsToParse && CharactersParsed >= CharactersToParse && ResultsCharDisplayDone == false) {
+            if (KillmailsParsed >= KillmailsToParse && CharactersParsed >= CharactersToParse && InitialResultsCharDisplayDone == false) {
                 clearInterval(ResultsPageTicker);
-                ResultCharacterDisplay()
+                ResultCharacterDisplay(true)
             }
-        },1000)
+        }, 1000)
 
         DataSorted = true;
 
@@ -298,13 +302,13 @@
                 var AttackerLength = ESIResult.attackers.length;
                 var q = 0;
                 while (q < AttackerLength) {                                                                    ///ATTACKER INFO
-                    var characterfound = false;
+                    var Acharacterfound = false;
                     var characterID = ESIResult.attackers[q].character_id;
                     var y = 0;
                     var CharacterAlength = Characters.length;
-                    while (y < CharacterAlength && characterfound == false) {
+                    while (y < CharacterAlength && Acharacterfound == false) {
                         if (characterID == Characters[y].character_id) {
-                            characterfound = true;
+                            Acharacterfound = true;
                         }
                         else {
                             y++;
@@ -312,21 +316,21 @@
                     }
 
 
-                    if (characterfound == true && side == 0) {
+                    if (Acharacterfound == true && side == 0) {
                         Characters[y].iskKilled += FinalSide0Kills[x].zkb.totalValue;
                     }
-                    if (characterfound == true && side == 1) {
+                    if (Acharacterfound == true && side == 1) {
                         Characters[y].iskKilled += FinalSide1Kills[x].zkb.totalValue;
                     }
 
-                    if (characterfound == false && side == 0) {
+                    if (Acharacterfound == false && side == 0) {
                         var value = FinalSide0Kills[x].zkb.totalValue;
-                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side : "N/A" })             ///Create new character
+                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side: "N/A" })             ///Create new character
                         ResultCharacterCreate(y);
                     }
-                    if (characterfound == false && side == 1) {
+                    if (Acharacterfound == false && side == 1) {
                         var value = FinalSide1Kills[x].zkb.totalValue;
-                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side : "N/A" })             ///Create new character
+                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side: "N/A" })             ///Create new character
                         ResultCharacterCreate(y);
                     }
 
@@ -335,13 +339,13 @@
 
                 }
 
+                var Vcharacterfound = false;
                 var p = 0;                                                                                               //victim info
                 var o = Characters.length;
                 var victim_id = ESIResult.victim.character_id
-                while (p < o && characterfound == false) {
-                    var characterfound = false;
+                while (p < o && Vcharacterfound == false) {
                     if (ESIResult.victim.character_id == Characters[p].character_id) {
-                        characterfound = true;
+                        Vcharacterfound = true;
                         if (side == 0) {
                             Characters[p].iskLost += FinalSide0Kills[x].zkb.totalValue;
                         }
@@ -351,14 +355,14 @@
                     }
                     p++;
                 }
-                if (characterfound == false && side == 0) {
+                if (Vcharacterfound == false && side == 0) {
                     var value = FinalSide0Kills[x].zkb.totalValue;
-                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side : "N/A" })             ///Create new character
+                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side: "N/A" })             ///Create new character
                     ResultCharacterCreate(p);
                 }
-                if (characterfound == false && side == 1) {
+                if (Vcharacterfound == false && side == 1) {
                     var value = FinalSide1Kills[x].zkb.totalValue;
-                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side : "N/A"})             ///Create new character
+                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side: "N/A" })             ///Create new character
                     ResultCharacterCreate(p);
                 }
 
@@ -404,14 +408,24 @@
                 CharactersParsed = CharactersParsed + 1;
             }
         }
-        CharInfoHTTP.open("GET", CharInfoURL, true)                                                //Figure out Async!!
+        CharInfoHTTP.open("GET", CharInfoURL, true)                                                
         CharInfoHTTP.send();
 
 
 
     }
 
-    function ResultCharacterDisplay() {                                             //Create divs for each character   (((((((((ONLY WORKING FOR ALLIANCEID, NOT CORP)))))))))  Uses SIDE to determine if it's to be put in.
+    function ResultCharacterDisplay(killers) {                                             //Create divs for each character   (((((((((ONLY WORKING FOR ALLIANCEID, NOT CORP)))))))))  Uses SIDE to determine if it's to be put in.
+
+        document.getElementById("ResultAllianceSide0").innerHTML = "";
+        document.getElementById("ResultAllianceSide1").innerHTML = "";
+
+        if (killers == false) {
+            Characters.sort(function (a, b) { return b.iskLost - a.iskLost });
+        }
+        else {
+            Characters.sort(function (a, b) { return b.iskKilled - a.iskKilled });
+        }
 
         var Rx = 0;
         var Ry = Characters.length;
@@ -423,22 +437,14 @@
             var RIskLost = Characters[Rx].iskLost;
             var Rside = Characters[Rx].side;
             var Rname = Characters[Rx].name;
-
             if (Rside != undefined && Rname != "N/A" && Rside != "N/A") {
                 document.getElementById("ResultAllianceSide" + Rside).innerHTML += '<div id="R' + RCharacterID + '" style="border-radius: 5px;width: 300px;height:100px;background-color:gray;margin-bottom: 10px;margin-top: 10px"><img style="float: left;margin-top: 15px;" src="http://image.eveonline.com/Character/' + RCharacterID + '_64.jpg" /><div><p style="margin-top: 15px;border-top-width: 10px;padding-top: 5px">' + Rname + '</p><p id="RK' + RCharacterID + '">Killed ' + RIskKilled.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p><p id = "RL' + RCharacterID + '">Lost ' + RIskLost.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p></div></div>';
 
 
             }
-
             Rx++;
-
-
         }
-
-        ResultsCharDisplayDone = true;
-
-
-
+        InitialResultsCharDisplayDone = true;
     }
 
 
@@ -468,18 +474,9 @@
                 info = '<div id="AllianceDIV' + LastAlliance + '" style="border-radius:5px;width:170px;height:220px;margin-right:10px;margin-left:10px  ; margin-top:20px ; margin-bottom:10px; background-color:grey"> <img id="AlliancePassed' + LastAlliance + '" src="RedCross.png" style="margin-bottom:40px;width:30px;height:30px"/> <img id="AllianceLogoURL' + LastAlliance + '" style="min-height:128px;min-width:128px" src="http://image.eveonline.com/Alliance/1_128.png" />'
             }
             document.getElementById("AllianceSide" + side).innerHTML += '' + info + ' <br /><select onchange="IsAlliance(' + (LastAlliance - 1) + ',value)"><option value="1">Alliance</option><option value="0">Corp</option></select> ' + LastAlliance + ' ID<br />  <input id="Alliance' + LastAlliance + '" onblur="allianceTest(' + LastAlliance + ')" /> <p id="ADBFound' + LastAlliance + '"></p> </div>';
-
             var NewAllianceString = "Alliance" + LastAlliance;
-
-
             listofAlliances[LastAlliance - 1][2] = side;
-
-
-
-
         }
-
-
     }
 
     function removeAlliance(input) {
