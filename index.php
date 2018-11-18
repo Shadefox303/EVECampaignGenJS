@@ -86,7 +86,7 @@
         </div>
 
 
-        <button style="float:right;width:150px;height:120px;margin-right:60px;margin-top:35px" onclick="ShowResults()">Detailed results page!</button>
+        <button id ="ResultsButton" style="float:right;width:150px;height:120px;margin-right:60px;margin-top:35px" disabled onclick="ShowResults()">Detailed results page!</button>
 
 
     </div>
@@ -106,8 +106,12 @@
 
 <div id="Result" style="display:none">
 
-    <div id="ResultAlliances" align="center" style="border-radius:10px;background-color:rgb(108, 129, 199);height:775px;margin-left:auto;margin-right:auto;max-width:800px;min-width:550px">
-        <button onclick="ResultCharacterDisplay(1)">Largest Killers</button><button onclick="ShowMain()">Back To Main</button><button onclick="ResultCharacterDisplay(0)">Largest Losers</button>
+    <div id="ResultAlliances" align="center" style="border-radius:10px;background-color:rgb(108, 129, 199);height:820px;margin-left:auto;margin-right:auto;max-width:800px;min-width:550px">
+        <button onclick="ResultCharacterDisplay(1,0)">Largest Killers</button><button onclick="ShowMain()">Back To Main</button><button onclick="ResultCharacterDisplay(0,0)">Largest Losers</button>
+
+        <div id="PageButtons">
+            <button onclick="ResultCharacterDisplay(2,startNum)">Page 1</button>
+        </div>
         <br />
         <div id="ResultAllianceSide0" style="border-radius:5px;float:left;margin-left:50px;margin-right:10px ; margin-top:20px ; margin-bottom:10px; height:700px ; width : 340px;  background-color:cornflowerblue;overflow-y:scroll">
 
@@ -131,7 +135,9 @@
         var CharactersParsed = 0;
         var InitialResultsCharDisplayDone = false;
         var DataSorted = false;
+        var ButtonsCreated = false;
 
+        var Resultkillers = 1;
         var ZkillPageNumber = 1;
 
         var CurrentAllianceFetch = 0;
@@ -271,14 +277,37 @@
         var KillmailsToParse = FinalSide1Kills.length + FinalSide0Kills.length
         var CharactersToParse = Characters.length;
 
+        var ButtonCreateTicker = setInterval(function () {
+            if (KillmailsParsed >= KillmailsToParse && CharactersParsed >= CharactersToParse && ButtonsCreated == false) {
+                clearInterval(ButtonCreateTicker);
+                ResultButtonsCreate();
+            }
+        }, 1000)
+
         var ResultsPageTicker = setInterval(function () {
             if (KillmailsParsed >= KillmailsToParse && CharactersParsed >= CharactersToParse && InitialResultsCharDisplayDone == false) {
                 clearInterval(ResultsPageTicker);
-                ResultCharacterDisplay(1)
+                ResultCharacterDisplay(1,0);
             }
         }, 1000)
 
         DataSorted = true;
+
+    }
+
+    function ResultButtonsCreate() {
+        document.getElementById("PageButtons").innerHTML = "";
+        var charlength = Characters.length
+        var startNum = 0;
+        var page = 1;
+
+        while (startNum < charlength) {
+            document.getElementById("PageButtons").innerHTML += '<button onclick="ResultCharacterDisplay(2,' + startNum + ')">Page ' + page + '</button>';
+
+            startNum = startNum + 250;
+            page++;
+        }
+        ButtonsCreated = true;
 
     }
 
@@ -415,24 +444,28 @@
 
     }
 
-    function ResultCharacterDisplay(killers) {                                             //Create divs for each character   
+    function ResultCharacterDisplay(killers,startNum) {                                             //Create divs for each character   
 
         document.getElementById("ResultAllianceSide0").innerHTML = "";
         document.getElementById("ResultAllianceSide1").innerHTML = "";
+
+        if (killers != 2) {
+            Resultkillers = killers;
+        }
 
         var PHPCharSort = new XMLHttpRequest();
         PHPCharSort.onreadystatechange = function () {
             if (PHPCharSort.readyState == 4 && PHPCharSort.status == 200) {
 
                 var SortedCharacters = JSON.parse(PHPCharSort.responseText)
-            
-                var Rx = 0;
+                var limit = 0;
+                var Rx = startNum;
                 var Ry = SortedCharacters.length;
                 while (Rx < Ry) {
                     var RCharacterID = SortedCharacters[Rx].character_id
                     var RAllianceID = SortedCharacters[Rx].allianceID;
                     var RCorpID = SortedCharacters[Rx].corpID;
-                    var RIskKilled = SortedCharacters[Rx].iskKilled;
+                    var RIskKilled = SortedCharacters[Rx].iskKilled;                                //Displaying too many characters!!!
                     var RIskLost = SortedCharacters[Rx].iskLost;
                     var Rside = SortedCharacters[Rx].side;
                     var Rname = SortedCharacters[Rx].name;
@@ -442,21 +475,19 @@
 
                     }
                     Rx++;
+                    limit++;
+                    if (limit >= 250) {
+                        break;
+                    }
                 }
-
-
-
-
-
-
             }
         }
-
-        PHPCharSort.open("POST", "PHPCharResultSorting.php?Killers=" + killers, true);
+        PHPCharSort.open("POST", "PHPCharResultSorting.php?Killers=" + Resultkillers, true);
         PHPCharSort.send(JSON.stringify(Characters))
 
-        InitialResultsCharDisplayDone = true;
+        document.getElementById("ResultsButton").disabled = "";
 
+        InitialResultsCharDisplayDone = true;
     }
 
 
@@ -781,23 +812,26 @@
     }
 
     function resetVariables() {
-        Characters = [];             //  character_id / iskLost / iskKilled /
-        System = []
-        KillmailsParsed = 0;
-        CharactersParsed = 0;
-        ResultsCharDisplayDone = false;
-        DataSorted = false;
+     
 
+         Characters = [];             //  character_id / iskLost / iskKilled /
+         System = []
+         KillmailsParsed = 0;
+         CharactersParsed = 0;
+         InitialResultsCharDisplayDone = false;
+         DataSorted = false;
+         ButtonsCreated = false;
 
+         Resultkillers = 1;
+         ZkillPageNumber = 1;
 
-        ZkillPageNumber = 1;
+         CurrentAllianceFetch = 0;
 
-        CurrentAllianceFetch = 0;
+         Allkillsfound = false;
+         Alllossesfound = false;
 
-        Allkillsfound = false;
-        Alllossesfound = false;
-
-        GetDataFinished = false;
+         GetDataFinished = false;
+        
 
         Side0Kills = [];
         Side1Kills = [];
