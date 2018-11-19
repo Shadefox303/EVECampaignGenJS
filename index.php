@@ -86,7 +86,7 @@
         </div>
 
 
-        <button id ="ResultsButton" style="float:right;width:150px;height:120px;margin-right:60px;margin-top:35px" disabled onclick="ShowResults()">Detailed results page!</button>
+        <button id="ResultsButton" style="float:right;width:150px;height:120px;margin-right:60px;margin-top:35px" disabled onclick="ShowResults()">Detailed results page!</button>
 
 
     </div>
@@ -106,18 +106,18 @@
 
 <div id="Result" style="display:none">
 
-    <div id="ResultAlliances" align="center" style="border-radius:10px;background-color:rgb(108, 129, 199);height:820px;margin-left:auto;margin-right:auto;max-width:800px;min-width:550px">
+    <div id="ResultAlliances" align="center" style="border-radius:10px;background-color:rgb(108, 129, 199);height:820px;margin-left:auto;margin-right:auto;max-width:900px;min-width:550px">
         <button onclick="ResultCharacterDisplay(1,0)">Largest Killers</button><button onclick="ShowMain()">Back To Main</button><button onclick="ResultCharacterDisplay(0,0)">Largest Losers</button>
 
         <div id="PageButtons">
             <button onclick="ResultCharacterDisplay(2,startNum)">Page 1</button>
         </div>
         <br />
-        <div id="ResultAllianceSide0" style="border-radius:5px;float:left;margin-left:50px;margin-right:10px ; margin-top:20px ; margin-bottom:10px; height:700px ; width : 340px;  background-color:cornflowerblue;overflow-y:scroll">
+        <div id="ResultAllianceSide0" style="border-radius:5px;float:left;margin-left:50px;margin-right:10px ; margin-top:20px ; margin-bottom:10px; height:700px ; width : 360px;  background-color:cornflowerblue;overflow-y:scroll">
 
         </div>
 
-        <div id="ResultAllianceSide1" style="border-radius:5px;float: right;margin-right:50px ;margin-left:10px ; margin-top:20px ; margin-bottom:10px; height:700px ; width : 340px; background-color:indianred;overflow-y:scroll">
+        <div id="ResultAllianceSide1" style="border-radius:5px;float: right;margin-right:50px ;margin-left:10px ; margin-top:20px ; margin-bottom:10px; height:700px ; width : 360px; background-color:indianred;overflow-y:scroll">
 
 
         </div>
@@ -128,6 +128,7 @@
 
 <script>
     {
+        var ConnectionsOpen = 0;
 
         var Characters = [];             //  character_id / iskLost / iskKilled /
         var System = []
@@ -136,6 +137,9 @@
         var InitialResultsCharDisplayDone = false;
         var DataSorted = false;
         var ButtonsCreated = false;
+
+        var side0char = [];
+        var side1char = [];
 
         var Resultkillers = 1;
         var ZkillPageNumber = 1;
@@ -285,9 +289,9 @@
         }, 1000)
 
         var ResultsPageTicker = setInterval(function () {
-            if (KillmailsParsed >= KillmailsToParse && CharactersParsed >= CharactersToParse && InitialResultsCharDisplayDone == false) {
+            if (KillmailsParsed >= KillmailsToParse && CharactersParsed >= CharactersToParse && ButtonsCreated == true && InitialResultsCharDisplayDone == false) {
                 clearInterval(ResultsPageTicker);
-                ResultCharacterDisplay(1,0);
+                ResultCharacterDisplay(1, 0);
             }
         }, 1000)
 
@@ -297,14 +301,20 @@
 
     function ResultButtonsCreate() {
         document.getElementById("PageButtons").innerHTML = "";
-        var charlength = Characters.length
+        if (side0char.length > side1char.length) {
+            var charlength = side0char.length
+        }
+        else {
+            var charlength = side1char.length
+        }
+
         var startNum = 0;
         var page = 1;
 
         while (startNum < charlength) {
             document.getElementById("PageButtons").innerHTML += '<button onclick="ResultCharacterDisplay(2,' + startNum + ')">Page ' + page + '</button>';
 
-            startNum = startNum + 250;
+            startNum = startNum + 100;
             page++;
         }
         ButtonsCreated = true;
@@ -347,19 +357,21 @@
 
                     if (Acharacterfound == true && side == 0) {
                         Characters[y].iskKilled += FinalSide0Kills[x].zkb.totalValue;
+                        UpdateRatio(y);
                     }
                     if (Acharacterfound == true && side == 1) {
                         Characters[y].iskKilled += FinalSide1Kills[x].zkb.totalValue;
+                        UpdateRatio(y);
                     }
 
                     if (Acharacterfound == false && side == 0) {
                         var value = FinalSide0Kills[x].zkb.totalValue;
-                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side: "N/A" })             ///Create new character
+                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side: "N/A", ratio: 1 })             ///Create new character
                         ResultCharacterCreate(y);
                     }
                     if (Acharacterfound == false && side == 1) {
                         var value = FinalSide1Kills[x].zkb.totalValue;
-                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side: "N/A" })             ///Create new character
+                        Characters.push({ character_id: characterID, iskKilled: value, iskLost: 0, corpID: ESIResult.attackers[q].corporation_id, allianceID: ESIResult.attackers[q].alliance_id, name: "N/A", side: "N/A", ratio: 1 })             ///Create new character
                         ResultCharacterCreate(y);
                     }
 
@@ -377,21 +389,23 @@
                         Vcharacterfound = true;
                         if (side == 0) {
                             Characters[p].iskLost += FinalSide0Kills[x].zkb.totalValue;
+                            UpdateRatio(p);
                         }
                         if (side == 1) {
                             Characters[p].iskLost += FinalSide1Kills[x].zkb.totalValue;
+                            UpdateRatio(p);
                         }
                     }
                     p++;
                 }
                 if (Vcharacterfound == false && side == 0) {
                     var value = FinalSide0Kills[x].zkb.totalValue;
-                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side: "N/A" })             ///Create new character
+                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side: "N/A", ratio: 0 })             ///Create new character
                     ResultCharacterCreate(p);
                 }
                 if (Vcharacterfound == false && side == 1) {
                     var value = FinalSide1Kills[x].zkb.totalValue;
-                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side: "N/A" })             ///Create new character
+                    Characters.push({ character_id: victim_id, iskKilled: 0, iskLost: value, corpID: ESIResult.victim.corporation_id, allianceID: ESIResult.victim.alliance_id, name: "N/A", side: "N/A", ratio: 0 })             ///Create new character
                     ResultCharacterCreate(p);
                 }
 
@@ -402,6 +416,12 @@
 
         ResultspageHTTP.open("GET", URL, true)
         ResultspageHTTP.send();
+    }
+
+    function UpdateRatio(CharSlot) {                                                                //Needs serious work
+
+        Characters[CharSlot].ratio = Characters[CharSlot].iskKilled / (Characters[CharSlot].iskLost + Characters[CharSlot].iskKilled);
+
     }
 
     function ResultCharacterCreate(CharacterNum) {                                      // Finish getting Character details
@@ -434,20 +454,32 @@
                 var JSONCharInfo = JSON.parse(CharInfoHTTP.responseText);
                 Characters[CharacterNum].name = JSONCharInfo.name;
                 Characters[CharacterNum].side = side;
+
+                if (side == 0) {
+                    side0char.push(Characters[CharacterNum]);
+                }
+                if (side == 1) {
+                    side1char.push(Characters[CharacterNum]);
+                }
+
                 CharactersParsed = CharactersParsed + 1;
             }
         }
-        CharInfoHTTP.open("GET", CharInfoURL, true)                                                
+        CharInfoHTTP.open("GET", CharInfoURL, true)
         CharInfoHTTP.send();
 
 
 
     }
 
-    function ResultCharacterDisplay(killers,startNum) {                                             //Create divs for each character   
+    function ResultCharacterDisplay(killers, startNum) {                                             //Create divs for each character
 
         document.getElementById("ResultAllianceSide0").innerHTML = "";
         document.getElementById("ResultAllianceSide1").innerHTML = "";
+
+        var ResultPHPChar = [];
+        ResultPHPChar[0] = side0char;
+        ResultPHPChar[1] = side1char;
 
         if (killers != 2) {
             Resultkillers = killers;
@@ -458,38 +490,79 @@
             if (PHPCharSort.readyState == 4 && PHPCharSort.status == 200) {
 
                 var SortedCharacters = JSON.parse(PHPCharSort.responseText)
+
+
+
                 var limit = 0;
                 var Rx = startNum;
-                var Ry = SortedCharacters.length;
-                while (Rx < Ry) {
-                    var RCharacterID = SortedCharacters[Rx].character_id
-                    var RAllianceID = SortedCharacters[Rx].allianceID;
-                    var RCorpID = SortedCharacters[Rx].corpID;
-                    var RIskKilled = SortedCharacters[Rx].iskKilled;                                //Displaying too many characters!!!
-                    var RIskLost = SortedCharacters[Rx].iskLost;
-                    var Rside = SortedCharacters[Rx].side;
-                    var Rname = SortedCharacters[Rx].name;
-                    if (Rside != undefined && Rname != "N/A" && Rside != "N/A") {
-                        document.getElementById("ResultAllianceSide" + Rside).innerHTML += '<div id="R' + RCharacterID + '" style="border-radius: 5px;width: 300px;height:100px;background-color:gray;margin-bottom: 10px;margin-top: 10px"><img style="float: left;margin-top: 15px;" src="http://image.eveonline.com/Character/' + RCharacterID + '_64.jpg" /><div><p style="margin-top: 15px;border-top-width: 10px;padding-top: 5px">' + Rname + '</p><p id="RK' + RCharacterID + '">Killed ' + RIskKilled.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p><p id = "RL' + RCharacterID + '">Lost ' + RIskLost.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p></div></div>';
+                var Ry = SortedCharacters[0].length;
 
+
+                while (Rx < Ry) {
+                    var RRatioColour = "red";
+                    var RCharacterID = SortedCharacters[0][Rx].character_id
+                    var RAllianceID = SortedCharacters[0][Rx].allianceID;
+                    var RCorpID = SortedCharacters[0][Rx].corpID;
+                    var RIskKilled = SortedCharacters[0][Rx].iskKilled;
+                    var RIskLost = SortedCharacters[0][Rx].iskLost;
+                    var Rside = SortedCharacters[0][Rx].side;
+                    var Rname = SortedCharacters[0][Rx].name;
+                    var Rratio = SortedCharacters[0][Rx].ratio;
+                    if (SortedCharacters[0][Rx].ratio > .3 && SortedCharacters[0][Rx].ratio <= .7) {
+                        RRatioColour = "yellow";
+                    }
+                    if (SortedCharacters[0][Rx].ratio > .7) {
+                        RRatioColour = "green";
+                    }
+                    if (Rside != undefined && Rname != "N/A" && Rside != "N/A") {
+                        document.getElementById("ResultAllianceSide" + Rside).innerHTML += '<div id="R' + RCharacterID + '" style="border-radius: 5px;width: 330px;height:100px;background-color:gray;margin-bottom: 10px;margin-top: 10px"><img style="float: left;margin-top: 15px;" src="http://image.eveonline.com/Character/' + RCharacterID + '_64.jpg"><div style="float:left;margin-left:4px" align ="left"><p style="margin-top:2px">' + Rname + '</p><p id="RK' + RCharacterID + '">Killed ' + RIskKilled.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p><p id="RL' + RCharacterID + '">Lost ' + RIskLost.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p></div><div style="margin-top:30px;margin-right:15px;float:right; width:50px;font-size:30px;color:' + RRatioColour + '">' + Rratio.toLocaleString("en-US", { minimumFractionDigits: 1 }) + '</div></div>';
 
                     }
                     Rx++;
                     limit++;
-                    if (limit >= 250) {
+                    if (limit >= 100) {
                         break;
                     }
                 }
+
+                var limit = 0;
+                var Rx = startNum;
+                var Ry = SortedCharacters[1].length;
+                while (Rx < Ry) {
+                    var RRatioColour = "red";
+                    var RCharacterID = SortedCharacters[1][Rx].character_id
+                    var RAllianceID = SortedCharacters[1][Rx].allianceID;
+                    var RCorpID = SortedCharacters[1][Rx].corpID;
+                    var RIskKilled = SortedCharacters[1][Rx].iskKilled;
+                    var RIskLost = SortedCharacters[1][Rx].iskLost;
+                    var Rside = SortedCharacters[1][Rx].side;
+                    var Rname = SortedCharacters[1][Rx].name;
+                    var Rratio = SortedCharacters[1][Rx].ratio;
+                    if (SortedCharacters[1][Rx].ratio > .3 && SortedCharacters[1][Rx].ratio <= .7) {
+                        RRatioColour = "yellow";
+                    }
+                    if (SortedCharacters[1][Rx].ratio > .7) {
+                        RRatioColour = "green";
+                    }
+                    if (Rside != undefined && Rname != "N/A" && Rside != "N/A") {
+                        document.getElementById("ResultAllianceSide" + Rside).innerHTML += '<div id="R' + RCharacterID + '" style="border-radius: 5px;width: 330px;height:100px;background-color:gray;margin-bottom: 10px;margin-top: 10px"><img style="float: left;margin-top: 15px;" src="http://image.eveonline.com/Character/' + RCharacterID + '_64.jpg"><div style="float:left;margin-left:4px" align ="left"><p style="margin-top:2px">' + Rname + '</p><p id="RK' + RCharacterID + '">Killed ' + RIskKilled.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p><p id="RL' + RCharacterID + '">Lost ' + RIskLost.toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</p></div><div style="margin-top:30px;margin-right:15px;float:right; width:50px;font-size:30px;color:' + RRatioColour + '">' + Rratio.toLocaleString("en-US", { minimumFractionDigits: 1 }) + '</div></div>';
+                    }
+                    Rx++;
+                    limit++;
+                    if (limit >= 100) {
+                        break;
+                    }
+                }
+
             }
         }
         PHPCharSort.open("POST", "PHPCharResultSorting.php?Killers=" + Resultkillers, true);
-        PHPCharSort.send(JSON.stringify(Characters))
+        PHPCharSort.send(JSON.stringify(ResultPHPChar))
 
         document.getElementById("ResultsButton").disabled = "";
 
         InitialResultsCharDisplayDone = true;
     }
-
 
     function IsAlliance(number, istrue) {
         listofAlliances[number][4] = istrue;
@@ -546,6 +619,9 @@
 
     function RunProgram() {
 
+        document.getElementById("ResultsButton").disabled = "disabled";
+
+
         resetVariables();
 
 
@@ -573,11 +649,11 @@
 
         if (GetDataFinished == false) {
 
-            if (Allkillsfound == false && Alllossesfound == false) {
+            if (Allkillsfound == false && Alllossesfound == false && ConnectionsOpen < 1 ) {
                 setTimeout(function () { GetZKillData("kills"); }, 1);
             }
 
-            if (Alllossesfound == false && Allkillsfound == true) {
+            if (Alllossesfound == false && Allkillsfound == true && ConnectionsOpen < 1) {
                 setTimeout(function () { GetZKillData("losses"); }, 1)
             }
 
@@ -609,7 +685,6 @@
 
     };
 
-
     function GetZKillData(KorL) {
         var killmailsParsed
         var AorC;
@@ -624,95 +699,112 @@
 
         var ConnectionURL = 'https://zkillboard.com/api/' + KorL + '/' + AorC + 'ID/' + allianceID + '/page/' + ZkillPageNumber + '/startTime/' + date + '/'
 
-
+        ConnectionsOpen = ConnectionsOpen + 1;
 
         var Connection = new XMLHttpRequest();
-        Connection.open("GET", ConnectionURL, false);
+        Connection.onreadystatechange = function () {
+            if (Connection.readyState == 4 && Connection.status == 200) {
+
+
+                var ResponseJSON = JSON.parse(Connection.responseText)
+                var arraysize = ResponseJSON.length;
+
+
+
+
+
+                if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "kills" && arraysize != 0) {
+
+                    var x = 0;
+                    var y = arraysize;
+                    while (x < y) {
+                        Side0Kills.push(ResponseJSON[x]);
+                        x++;
+                    }
+                    killmailsParsed = Side0Kills.length
+
+                }
+                if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "kills" && arraysize != 0) {
+                    var x = 0;
+                    var y = arraysize;
+                    while (x < y) {
+                        Side1Kills.push(ResponseJSON[x]);
+                        x++;
+                    }
+                    killmailsParsed = Side1Kills.length
+                }
+                if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "losses" && arraysize != 0) {
+                    var x = 0;
+                    var y = arraysize;
+                    while (x < y) {
+                        Side0Losses.push(ResponseJSON[x]);
+                        x++;
+                    }
+                    killmailsParsed = Side0Losses.length
+                }
+                if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "losses" && arraysize != 0) {
+                    var x = 0;
+                    var y = arraysize;
+                    while (x < y) {
+                        Side1Losses.push(ResponseJSON[x]);
+                        x++;
+                    }
+                    killmailsParsed = Side1Losses.length
+                }
+
+
+                ZkillPageNumber = ZkillPageNumber + 1;
+
+
+
+
+                if (HasPercentageUnder == false) {
+                    PercentageUnder = ResponseJSON[0].killmail_id - progressKillID;
+                    HasPercentageUnder = true;
+                }
+
+
+
+                if (ResponseJSON.length != 0) {
+                    var PercentageOver = ResponseJSON[0].killmail_id - progressKillID;
+                    var Percentage = PercentageOver / PercentageUnder
+                    var finalProgress = Math.round(100 - (Percentage * 100));
+
+                    document.getElementById("Progress").innerHTML = listofAlliances[CurrentAllianceFetch][0] + " " + KorL + " - " + finalProgress + "%";
+
+
+                };
+
+
+
+                if (arraysize < 200 && KorL == "kills") {
+                    Allkillsfound = true;
+                    ZkillPageNumber = 1;
+                    HasPercentageUnder = false;
+                }
+                if (arraysize < 200 && KorL == "losses") {
+                    Alllossesfound = true;
+                    ZkillPageNumber = 1;
+                    HasPercentageUnder = false;
+                }
+
+                ConnectionsOpen = ConnectionsOpen - 1;
+
+                Controller();
+
+
+
+
+
+
+            }
+        }
+
+
+
+        Connection.open("GET", ConnectionURL, true);
         Connection.send();
-        var ResponseJSON = JSON.parse(Connection.responseText)
-        var arraysize = ResponseJSON.length;
 
-
-
-
-
-        if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "kills" && arraysize != 0) {
-
-            var x = 0;
-            var y = arraysize;
-            while (x < y) {
-                Side0Kills.push(ResponseJSON[x]);
-                x++;
-            }
-            killmailsParsed = Side0Kills.length
-
-        }
-        if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "kills" && arraysize != 0) {
-            var x = 0;
-            var y = arraysize;
-            while (x < y) {
-                Side1Kills.push(ResponseJSON[x]);
-                x++;
-            }
-            killmailsParsed = Side1Kills.length
-        }
-        if (listofAlliances[CurrentAllianceFetch][2] == 0 && KorL == "losses" && arraysize != 0) {
-            var x = 0;
-            var y = arraysize;
-            while (x < y) {
-                Side0Losses.push(ResponseJSON[x]);
-                x++;
-            }
-            killmailsParsed = Side0Losses.length
-        }
-        if (listofAlliances[CurrentAllianceFetch][2] == 1 && KorL == "losses" && arraysize != 0) {
-            var x = 0;
-            var y = arraysize;
-            while (x < y) {
-                Side1Losses.push(ResponseJSON[x]);
-                x++;
-            }
-            killmailsParsed = Side1Losses.length
-        }
-
-
-        ZkillPageNumber = ZkillPageNumber + 1;
-
-
-
-
-        if (HasPercentageUnder == false) {
-            PercentageUnder = ResponseJSON[0].killmail_id - progressKillID;
-            HasPercentageUnder = true;
-        }
-
-
-
-        if (ResponseJSON.length != 0) {
-            var PercentageOver = ResponseJSON[0].killmail_id - progressKillID;
-            var Percentage = PercentageOver / PercentageUnder
-            var finalProgress = Math.round(100 - (Percentage * 100));
-
-            document.getElementById("Progress").innerHTML = listofAlliances[CurrentAllianceFetch][0] + " " + KorL + " - " + finalProgress + "%";
-
-
-        };
-
-
-
-        if (arraysize < 200 && KorL == "kills") {
-            Allkillsfound = true;
-            ZkillPageNumber = 1;
-            HasPercentageUnder = false;
-        }
-        if (arraysize < 200 && KorL == "losses") {
-            Alllossesfound = true;
-            ZkillPageNumber = 1;
-            HasPercentageUnder = false;
-        }
-
-
-        Controller();
 
     }
 
@@ -729,8 +821,6 @@
 
 
     }
-
-
 
     function allianceTest(Alliancetested) {
 
@@ -783,7 +873,6 @@
 
     }
 
-
     function isReady() {
         var year = document.getElementById("Year").value;
         var month = document.getElementById("Month").value;
@@ -812,26 +901,31 @@
     }
 
     function resetVariables() {
-     
 
-         Characters = [];             //  character_id / iskLost / iskKilled /
-         System = []
-         KillmailsParsed = 0;
-         CharactersParsed = 0;
-         InitialResultsCharDisplayDone = false;
-         DataSorted = false;
-         ButtonsCreated = false;
+        ConnectionsOpen = 0;
 
-         Resultkillers = 1;
-         ZkillPageNumber = 1;
+        Characters = [];             //  character_id / iskLost / iskKilled /
+        System = []
+        KillmailsParsed = 0;
+        CharactersParsed = 0;
+        InitialResultsCharDisplayDone = false;
+        DataSorted = false;
+        ButtonsCreated = false;
 
-         CurrentAllianceFetch = 0;
+        side0char = [];
+        side1char = [];
 
-         Allkillsfound = false;
-         Alllossesfound = false;
 
-         GetDataFinished = false;
-        
+        Resultkillers = 1;
+        ZkillPageNumber = 1;
+
+        CurrentAllianceFetch = 0;
+
+        Allkillsfound = false;
+        Alllossesfound = false;
+
+        GetDataFinished = false;
+
 
         Side0Kills = [];
         Side1Kills = [];
